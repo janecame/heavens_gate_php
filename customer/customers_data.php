@@ -84,7 +84,7 @@ switch($method) {
             }
    
 
-            $sql = "INSERT INTO personal(order_id, lastname, firstname, middlename, birthdate, age, sex, civil_status, email, landline, contact) VALUES(:order_id, :lastname, :firstname, :middlename, :birthdate, :age, :sex, :civil_status, :email, :landline, :contact);
+            $sql = "INSERT INTO personal(order_id, lastname, firstname, middlename, birthdate, age, sex, civil_status, address, email, landline, contact) VALUES(:order_id, :lastname, :firstname, :middlename, :birthdate, :age, :sex, :civil_status, :address, :email, :landline, :contact);
 
                     INSERT INTO orders(order_id, customer_id, plot_id) VALUES(:order_id, :customer_id, :plot);
 
@@ -108,7 +108,8 @@ switch($method) {
             $stmt->bindParam(':birthdate', $_POST['birthdate']);  
             $stmt->bindParam(':age', $_POST['age'], PDO::PARAM_STR);  
             $stmt->bindParam(':sex', string_to_int($_POST['sex']));  
-            $stmt->bindParam(':civil_status', string_to_int($_POST['civilstatus']));  
+            $stmt->bindParam(':civil_status', string_to_int($_POST['civilstatus']));
+            $stmt->bindParam(':address', $_POST['address'], PDO::PARAM_STR);    
             $stmt->bindParam(':email', $_POST['email'], PDO::PARAM_STR);  
             $stmt->bindParam(':landline', $_POST['landline'], PDO::PARAM_STR);  
             $stmt->bindParam(':contact', $_POST['contact'], PDO::PARAM_STR);

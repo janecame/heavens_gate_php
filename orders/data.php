@@ -14,13 +14,13 @@ function getStatus($status){
 }
 
 
-function getImageValidID($order_id){
+function getImageURL($order_id, $type){
     
     $dir = 'customer/uploads/';
     $server = 'http://localhost/heavens_gate/';
     
 
-    $filename = "../customer/uploads/id-".$order_id.".*";
+    $filename = "../customer/uploads/".$type."-".$order_id.".*";
     $fileinfo = glob($filename);
 
     if (empty($fileinfo)) {
@@ -31,11 +31,10 @@ function getImageValidID($order_id){
     $filepath = $fileinfo[0];
     $fileext = explode(".", $filepath);
     $fileactualext = $fileext[count($fileext) - 1];
-    $image_url = $server . $dir . "id-".$order_id.".".$fileactualext;
+    $image_url = $server . $dir . "".$type."-".$order_id.".".$fileactualext;
 
     return $image_url;
 
-    
 }
 
 $method = $_SERVER['REQUEST_METHOD'];
@@ -65,7 +64,14 @@ switch($method) {
             $stmt->execute();
             $data = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            $response = [...$data, 'img' => getImageValidID($data['order_id'])]; 
+            $response = [
+                        ...$data, 
+                        'imgID' => getImageURL($data['order_id'], "id"),
+                        'imgReceipt' => getImageURL($data['order_id'], "receipt"),
+                        'imgSpecimen' => getImageURL($data['order_id'], "specimen"),
+                        'imgESign' => getImageURL($data['order_id'], "eSign")
+
+                    ]; 
 
         } else {
         	

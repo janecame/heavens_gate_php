@@ -14,7 +14,51 @@ function generateUserID() {
     return $date . '-' . $randStr;
 }
 
+function generateFileName() {
+    $date = date("y");
+    $keyLength = 4;
+    $str = "abcdefghijklmnopqrstuvwxyz";
+    $randStr = substr(str_shuffle($str), 0, $keyLength) . '-' .
+               substr(str_shuffle($str), 0, $keyLength);
+    
+    return $randStr;
+}
 
+function getImageURL($user_id, $status, $conn){
+    
+    $dir = 'profiles/';
+    $server = 'http://localhost/heavens_gate/';
+
+    if ($status === 0) {
+        return $image_url = $server . $dir . "user.png";
+    }else{
+
+        $sql = "SELECT profile_name FROM users_details WHERE user_id = :user_id";
+        $stmt = $conn->prepare($sql);
+        $stmt->bindParam(':user_id', $user_id, PDO::PARAM_STR);
+        $stmt->execute();
+        $name = $stmt->fetch();
+        
+        $filename = "profiles/profile-".$name['profile_name'].".*";
+        $fileinfo = glob($filename);
+
+
+        if (empty($fileinfo)) {
+           return "file not found.";
+        }
+
+        $filepath = $fileinfo[0];
+        $fileext = explode(".", $filepath);
+        $fileactualext = $fileext[count($fileext) - 1];
+        $image_url = $server . $dir . "profile-" . $name['profile_name'] . ".".$fileactualext;  
+
+        return $image_url;
+
+    }
+
+   
+
+}
 
 
 $method = $_SERVER['REQUEST_METHOD'];
@@ -33,7 +77,8 @@ switch($method) {
                 users_details.sex,
                 users_details.civil_status, 
                 users_details.email,
-                users_details.contact
+                users_details.contact,
+                users_details.profile
                 FROM users
                 JOIN users_details
                 ON users.user_id = users_details.user_id
@@ -42,8 +87,13 @@ switch($method) {
             $stmt = $conn->prepare($sql);
             $stmt->bindParam(':username', $path[3], PDO::PARAM_STR);
             $stmt->execute();
-            $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            echo json_encode($result);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            $response = [
+                        ...$result,
+                        'imgProfile' => getImageURL($result['user_id'], $result['profile'], $conn)
+                    ];
+            echo json_encode($response);
         }
 
         break;
@@ -126,12 +176,42 @@ switch($method) {
             }   
 
         }
+
+
+        if ($path[3] === "upload-profile") {
+
+            $user_id = $path[4];
+            $filename = generateFileName();
+            $fileNameNew = "profile-".$filename."."."jpg";
+
+            move_uploaded_file($_FILES["file"]["tmp_name"], "profiles/" . $fileNameNew);
+
+            $sql = "UPDATE users_details SET profile = 1, profile_name = :filename WHERE user_id = :user_id";
+
+            $stmt = $conn->prepare($sql);
+            $stmt->bindParam(':user_id', $user_id);
+            $stmt->bindParam(':filename', $filename);
+
+            if($stmt->execute()) {
+                $response = ['status' => 1, 'message' => 'Upload Successfully.'];
+            } else {
+                $response = ['status' => 0, 'message' => 'Upload Failed '];
+            }
+
+            echo json_encode($response);
+
+            
+
+        }
         break;
 
     case "PUT":
 
-        $input = json_decode( file_get_contents('php://input'));
         
+
+ 
+           
+        $input = json_decode( file_get_contents('php://input'));
         $sql = "UPDATE users_details SET firstname= :firstname, middlename= :middlename, lastname=:lastname, sex=:sex, civil_status=:civil_status, birthdate=:birthdate, age=:age, contact=:contact, address=:address, email=:email WHERE user_id = :user_id";
 
         $stmt = $conn->prepare($sql);
@@ -153,8 +233,19 @@ switch($method) {
         } else {
             $response = ['status' => 0, 'message' => 'Approved Failed'];
         }
+
         echo json_encode($response);
+
         break;
+        
+
+        
+
+
+        
+
+
+        
 
     case "DELETE":
 
