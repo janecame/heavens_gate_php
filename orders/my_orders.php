@@ -33,27 +33,22 @@ switch($method) {
     case "GET":
 
         $path = explode('/', $_SERVER['REQUEST_URI']);
-        $customer_id = getCustomerID($path[4], $conn);
-    	$sql = "SELECT * FROM orders WHERE customer_id = :customer_id ";
+        $client_id = getCustomerID($path[4], $conn);
+
+    	$sql = "SELECT * FROM clients WHERE client_id = :client_id ";
 
         $stmt = $conn->prepare($sql);
-        $stmt->bindParam(':customer_id', $customer_id);
+        $stmt->bindParam(':client_id', $client_id);
         $stmt->execute();
-        $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $response = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        $response = array();
-        foreach ($orders as $key => $value) {
-            $response[] = [
-                            'order_id' => $value['order_id'],
-                            'plot_id' => $value['plot_id'],
-                            'customer_id' => $value['customer_id'],
-                            'status' => getStatus($value['status'])
-                          ];
+        if ($response) {
+            $response = ['message' => 'Account existed.', 'status' => 1, 'obj' => $response];
             
-            
-            
+        } else {
+            $response = ['message' => 'No account purchased yet.', 'status' => 0];
+    
         }
-        
         echo json_encode($response);
 
 

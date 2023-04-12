@@ -53,14 +53,17 @@ function gridCheck($path, $conn, $result) {
       break;
     case "guest":
 
-        if ($result['grid_status'] == 1) {
-            $response = ['status' => 1, 'message' => 'plot available', 'plot_id' => $result['plot_id']];
+        if ($result['status'] == 1) {
+            $response = ['status' => 1, 'message' => 'Plot is Available', 'plot_id' => $result['plot_id']];
 
-        }else if ($result['grid_status'] == 2 || $result['grid_status'] == 3) {
-            $response = ['status' => 2, 'message' => 'plot occupied or sold', 'plot_id' => $result['plot_id']];
+        }else if ($result['status'] == 2 || $result['status'] == 3) {
+            $response = ['status' => 2, 'message' => 'Plot is Occupied or Sold', 'plot_id' => $result['plot_id']];
+        }else if($result['status'] == 0){
+            $response = ['status' => 0, 'message' => 'Plot Unavailable', 'plot_id' => $result['id']];
         }else{
             $response = "unknown";
         }
+        
         return  $response;
       break;
     default:
@@ -83,14 +86,14 @@ switch($method) {
     case "GET":
         $path = explode('/', $_SERVER['REQUEST_URI']);
         
-        $sql = "SELECT * FROM grids WHERE plot_id = :plot_id";
+        $sql = "SELECT * FROM plots WHERE plot_id = :plot_id";
         $stmt = $conn->prepare($sql);
         $stmt->bindParam(':plot_id', $path[4]);
         $stmt->execute();
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($result) {
-            $response = availabilityCheck($result['grid_status']);
+            $response = availabilityCheck($result['status']);
         }else{
             $response = ['status' => 0, 'message' => 'Sorry, Invalid Plot.'];
         } 
@@ -102,16 +105,14 @@ switch($method) {
 
         $input = json_decode( file_get_contents('php://input'));
         
-
-
         $path = explode('/', $_SERVER['REQUEST_URI']);
 
-        $sql = "SELECT * FROM grids WHERE grid_x = :x AND grid_y = :y AND grid_parent = :grid_parent AND grid_index = :grid_index";
+        $sql = "SELECT * FROM plots WHERE id = :id";
         $stmt = $conn->prepare($sql);
-        $stmt->bindValue(':x', $input->x);
-        $stmt->bindValue(':y', $input->y);
-        $stmt->bindValue(':grid_parent', $input->gridParent);
-        $stmt->bindValue(':grid_index', $input->gridIndex);
+        $stmt->bindValue(':id', $input->plot_id);
+        // $stmt->bindValue(':lat', $input->lat);
+        // $stmt->bindValue(':lng', $input->lng);
+        // $stmt->bindValue(':status', $input->status);
         $stmt->execute();
         $result = $stmt->fetch();
 
